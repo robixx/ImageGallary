@@ -1,0 +1,363 @@
+﻿@{
+    ViewData["Title"] = "Image Page";
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+
+
+    .card-headers {
+        padding: .5rem 0.6rem;
+        margin-bottom: 0;
+        background-color: rgb(247 247 247 / 3%);
+        border-bottom: 1px solid rgba(0, 0, 0, .125);
+    }
+
+    .upload-area {
+        border: 1px dashed #db0909;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin-bottom: 2rem;
+        background-color: #f3edee;
+    }
+
+        .upload-area.highlight {
+            background-color: #e9ecef;
+            border-color: #db0909;
+        }
+
+    .gallery-container {
+        padding: 2rem 0;
+    }
+
+    .card {
+        border: 1px solid #e0e0e0;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        cursor: pointer;
+        position: relative;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+    .gallery-img-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .gallery-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        transition: transform 0.5s ease-in-out;
+    }
+
+    .card:hover .gallery-img {
+        transform: scale(1.05);
+    }
+
+    .card-body {
+        padding: 0.75rem 1rem;
+        background-color: #fff;
+    }
+
+    .preview-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .card:hover .preview-overlay {
+        opacity: 1;
+    }
+
+    .preview-btn {
+        background-color: rgba(255, 255, 255, 0.85);
+        color: #333;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+
+        .preview-btn:hover {
+            background-color: white;
+        }
+
+    .modal-content {
+        border: none;
+        border-radius: 1rem;
+    }
+
+    .modal-body {
+        position: relative;
+        padding: 0;
+    }
+
+    .modal-img {
+        width: 100%;
+        border-radius: 1rem;
+    }
+
+    .modal-title-text {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #343a40;
+        text-align: center;
+        padding: 1rem 0;
+    }
+
+    .btn-close {
+        background-color: #fff;
+        border-radius: 50%;
+        opacity: 1;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        padding: 0.75rem;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+    }
+
+    .modal-navigation {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 1rem;
+        z-index: 999;
+    }
+
+        .modal-navigation .btn {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: background-color 0.3s ease;
+        }
+
+            .modal-navigation .btn:hover {
+                background-color: rgba(0, 0, 0, 0.7);
+            }
+
+</style>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-headers">
+                <h5 class="text-capitalize text-danger text-center">Image Uploded</h5>
+            </div>
+            <div class="card-body">
+                <!-- Drag and Drop Upload Area -->
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="upload-area" id="drop-zone">
+                        <div class="upload-area-text">
+                            <input type="file" id="fileInput" name="files" multiple class="d-none" />
+                            <i class="fas fa-cloud-upload-alt upload-area-icon" style="color:#9f5050"></i>
+                            <br>
+                            ছবি আপলোডের জন্য এখানে ড্র্যাগ এবং ড্রপ করুন
+                            <br>
+                            <small>(অথবা ক্লিক করে ফাইল সিলেক্ট করুন)</small>
+                        </div>
+                    </div>
+                    <div class="mb-3 text-center">
+                        <button type="button" id="uploadBtn" class="btn btn-primary btn-sm">Image Upload</button>
+                    </div>
+
+                    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4" id="gallery-grid">
+                        <!-- Uploaded image cards will be inserted here by JavaScript -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for full screen image view -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-top modal-sm">
+        <div class="modal-content">
+            <div class="modal-body">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <img src="" class="modal-img" id="modalImage" alt="Full screen image">
+                <div class="modal-navigation">
+                    <button id="prevBtn" class="btn">&lt;</button>
+                    <button id="nextBtn" class="btn">&gt;</button>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-center">
+                <h5 class="modal-title-text mb-0" id="imageModalLabel"></h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+   
+     const allImages = [];
+     let selectedFiles = []; 
+     let currentIndex = 0;
+
+     const uploadBtn = document.getElementById("uploadBtn");
+     const galleryGrid = document.getElementById('gallery-grid');
+     const modalImage = document.getElementById('modalImage');
+     const modalTitle = document.getElementById('imageModalLabel');
+     const prevBtn = document.getElementById('prevBtn');
+     const nextBtn = document.getElementById('nextBtn');
+     const dropZone = document.getElementById('drop-zone');
+
+     
+     function handleFiles(files) {
+         for (const file of files) {
+             if (file.type.startsWith("image/")) {
+                 const reader = new FileReader();
+                 reader.onload = (event) => {
+                     const newImage = {
+                         url: event.target.result,
+                         filename: file.name
+                     };
+                     allImages.push(newImage);
+                     selectedFiles.push(file); // store file for upload
+                     renderGallery();
+                 };
+                 reader.readAsDataURL(file);
+             }
+         }
+     }
+
+     // ✅ Render gallery
+     function renderGallery() {
+         galleryGrid.innerHTML = '';
+         allImages.forEach((image, index) => {
+             const cardCol = document.createElement('div');
+             cardCol.className = 'col';
+             cardCol.innerHTML = `
+                 <div class="card" data-index="${index}" data-bs-toggle="modal" data-bs-target="#imageModal">
+                     <div class="gallery-img-wrapper">
+                         <img src="${image.url}" class="gallery-img" alt="${image.filename}">
+                         <div class="preview-overlay">
+                             <button class="preview-btn">Preview</button>
+                         </div>
+                     </div>
+                     <div class="card-body">
+                         <h6 class="card-title text-center text-muted">${image.filename}</h6>
+                     </div>
+                 </div>
+             `;
+             galleryGrid.appendChild(cardCol);
+         });
+     }
+
+     // ✅ Update modal
+     function updateModal() {
+         if (allImages.length > 0) {
+             modalImage.src = allImages[currentIndex].url;
+             modalImage.alt = allImages[currentIndex].filename;
+             modalTitle.textContent = allImages[currentIndex].filename;
+         }
+     }
+
+     // ✅ Modal events
+     document.getElementById('imageModal').addEventListener('show.bs.modal', (event) => {
+         const card = event.relatedTarget;
+         currentIndex = parseInt(card.dataset.index);
+         updateModal();
+     });
+
+     prevBtn.addEventListener('click', () => {
+         currentIndex = (currentIndex > 0) ? currentIndex - 1 : allImages.length - 1;
+         updateModal();
+     });
+
+     nextBtn.addEventListener('click', () => {
+         currentIndex = (currentIndex < allImages.length - 1) ? currentIndex + 1 : 0;
+         updateModal();
+     });
+
+     // ✅ Drag & Drop
+     dropZone.addEventListener('dragover', (e) => {
+         e.preventDefault();
+         dropZone.classList.add('highlight');
+     });
+
+     dropZone.addEventListener('dragleave', () => {
+         dropZone.classList.remove('highlight');
+     });
+
+     dropZone.addEventListener('drop', (e) => {
+         e.preventDefault();
+         dropZone.classList.remove('highlight');
+         const files = e.dataTransfer.files;
+         if (files.length > 0) handleFiles(files);
+     });
+
+     dropZone.addEventListener('click', () => {
+         const fileInput = document.createElement('input');
+         fileInput.type = 'file';
+         fileInput.accept = 'image/*';
+         fileInput.multiple = true;
+         fileInput.style.display = 'none';
+         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+         document.body.appendChild(fileInput);
+         fileInput.click();
+         document.body.removeChild(fileInput);
+     });
+
+     // ✅ Upload button → call controller
+     uploadBtn.addEventListener("click", () => {
+         if (selectedFiles.length === 0) {
+             alert("Please select at least one image");
+             return;
+         }
+
+         const formData = new FormData();
+         selectedFiles.forEach(file => {
+             formData.append("files", file); // matches List<IFormFile> files
+         });
+
+         fetch("/Image/SaveImages", {
+             method: "POST",
+             body: formData
+         })
+         .then(res => {
+             if (res.ok) {
+                 alert("Images uploaded successfully!");
+                 selectedFiles = []; // clear after upload
+             } else {
+                 alert("Upload failed!");
+             }
+         })
+         .catch(err => console.error("Error:", err));
+     });
+
+     // ✅ Initial empty gallery
+     renderGallery();
+</script>
